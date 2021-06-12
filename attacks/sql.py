@@ -59,7 +59,9 @@ def is_vulnerable(response):
     }
     for error in errors:
         # if you find one of these errors, return True
+        #print(bs(response.text))
         if error in response.content.decode().lower():
+        #if error in respone.text.lower():
             return True
     # no error detected
     return False
