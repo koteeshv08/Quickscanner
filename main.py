@@ -25,14 +25,16 @@ import builtwith
 import threading
 import urllib.request 
 from argparse import *
+from attacks import sql
 from parsel import Selector
 from termcolor import colored
 from  urllib.parse import urlparse
 from attacks import vulnerable_default_pages
-from attacks import sql
+
 
 #define variables
 url=''
+input_url=''
 threads=1
 output='txt'
 cookies={}
@@ -58,7 +60,7 @@ def helper():
 		print(colored("USAGE OF THE PROGRAM",'blue'))
 		print(colored("--------------------",'yellow'))
 		print(colored("         python3 main.py -u <url> -t <threads> -o <output> -c <cookie> -p <single_page> ",'red'))
-		print(colored("\n         Ex: python3 main.py -u http://msrit.edu (-p http://msrit.edu/index.php) -t 2 -o txt -c \"{\'phpsessionid\':\'1234\'}\" ",'cyan',attrs=['dark']))
+		print(colored("\n         Ex: python3 main.py -u http://msrit.edu (-p http://msrit.edu/index.php) -t 2 -o txt -c \"{\'phpsessionid\':\'1234\'}\" ",'green',attrs=['bold']))
 		print(colored("\nOPTIONS",'blue'))
 		print(colored("-------",'yellow'))
 		print(colored('''        -u --url     --> URL of the target website to scan    Ex: http://website.com
@@ -131,6 +133,7 @@ def internet_check():
 #function to check given url to valid or notd 
 def url_check():
 	try:
+		global url
 		if not re.match(r'http(s?)\:\/\/', url):
 			print(colored('[-] ENTER THE CORRECT URL OF THE TARGET','red'))
 			f()
@@ -153,11 +156,15 @@ def cookie_check():
 	try:
 		#print(colored(input_url,'red'))
 		#print(colored(cookies,'red'))
+		global url
+		global cookies
+		global validcookie
 		response1=requests.get(input_url,cookies=cookies,timeout=5)
 		response2=requests.get(input_url,timeout=5)
+		global validcookie
 		if('Content-Length' in response1.headers and 'Content-Length' in response2.headers):	
 			if not (response1.headers['Content-Length']==response2.headers['Content-Length']):
-				print(colored("[+] VALID COOKIE",'green'))
+				print(colored("[++] VALID COOKIE",'green')) 
 				validcookie=True
 			else:
 				print(colored("[-]INVALID COOKIE",'red'))
@@ -185,6 +192,7 @@ def cookie_check():
 #function to know target is reachable or not
 def host_reachable():
 	try:
+		global url
 		status_code = urllib.request.urlopen(url,timeout=5).getcode()
 		if(status_code == 200):
 			print(colored('[+] TARGET IS REACHABLE ','green'))
@@ -202,10 +210,10 @@ def host_reachable():
 		print(colored('[-] TARGET IS NOT REACHABLE CHECK URL ','red'))
 		f()
 		sys.exit(0)
-
 #function to gather information about the Target website
 def information_gathering():
 	try:
+		global url
 		response=requests.get(url,timeout=5)
 		if('server' in response.headers):
 			print(colored("[+]  SERVER      --> "+response.headers['server'],'green'))
@@ -231,12 +239,13 @@ target_links=[]
 target_photos=[]
 target_photos_dict={}
 
-def spider_links(myurl,mycookies={}):
+def spider_links(myurl,mycookies={},first=False):
+	global links_list , target_photos_dict
 	try:
     		if(re.match(r'http(s?).*logout.*',myurl)):
     		#if we logout from the session we will miss some pages
-    			links_list.append(myurl)
-    		if(myurl not in links_list):
+    			return
+    		if(myurl not in links_list or first==True):
 	        	response=requests.get(myurl,timeout=5,cookies=mycookies)
 		        if(response.status_code!=200):
 		        	return
@@ -254,13 +263,15 @@ def spider_links(myurl,mycookies={}):
 		        		temp.append(i)
 		        if(temp!=[]):
 		        	target_photos_dict[myurl]=temp
-		        s=set(links)
-		        links=list(s)
+		       # print(target_photos_dict	)
+		        links=list(set(links))
 		        for link in links:
 		        	if(len(link)<=0):
 		        		continue
 		        	#link=link.strip('/')
 		        	#print(link)
+		        	if 'javascript:' in link:
+		        		continue
 		        	if re.match(r'#.*',link):
 		        		#no need to check for fragments so skip
 		        		continue
@@ -272,15 +283,15 @@ def spider_links(myurl,mycookies={}):
 		        			continue
 		        	if re.match(r'http(s?).*\.in',link):
 		        		#illgeal to do crawl on .in websites
-		        		print(colored('[-].IN WEBSITE GOT SKIP              -->'+link,'white',attrs=['dark']))
+		        		print(colored('[-].IN WEBSITE GOT SKIP          -->  '+link,'white',attrs=['dark']))
 		        		continue
 		        	if re.match(r'http(s?).*\.pdf',link):
 		        		#If we got pdf link then no crawl
-		        		print(colored('[-].PDF FILE GOT SKIP                -->'+link,'white',attrs=['dark']))
+		        		print(colored('[-].PDF FILE GOT SKIP            -->  '+link,'white',attrs=['dark']))
 		        		continue
 		        	if re.match(r'http(s?).*\.jpg',link) or re.match(r'http(s?).*\.jpeg',link) or re.match(r'http(s?).*\.png',link) or re.match(r'.*\.png',link):
 		        		#if we got jpg files then no need to crawl
-		        		print(colored('[-] IMAGE FILE GOT SKIP              -->'+link,'white',attrs=['dark']))
+		        		print(colored('[-] IMAGE FILE GOT SKIP          -->  '+link,'white',attrs=['dark']))
 		        		continue
 		        	if re.match(r'http(s?)\:\/\/.*',link):
 		        		if not re.match(url+'.*',link):
@@ -342,17 +353,23 @@ def print_target_links():
 		print(colored('[+] PAGES GOT AFTER SPIDERING AND CRAWLING ','yellow'))
 		#for i in links_list:
 			#print(colored('     '+i,'blue'))
+		global links_list , target_links
+		links_list=list(set(links_list))
 		print(colored('[*] TARGET LINKS STORED INSIDE   --> target.txt(Inside report)','cyan',attrs=['bold']))
 		for i in links_list:
 			single_link_parsing=urlparse(i)
 			if(single_link_parsing.query):
 				query_url=single_link_parsing.query
 				query_list=query_url.split('&')
-				#for k in query_list:
-				#	i1=k.split('=')
-				#	if(i1[1].isnumeric()):
-				#		continue
-			if(single_link_parsing.path+'?'+single_link_parsing.query not in target_path):
+				for k in query_list:
+					i1=k.split('=')
+					if(i1[1].isnumeric() and single_link_parsing.path in target_path):
+						break
+				else:
+					if(single_link_parsing.path+'?'+single_link_parsing.query not in target_path):
+						target_path.append(single_link_parsing.path)
+						target_links.append(i)
+			elif(single_link_parsing.path+'?'+single_link_parsing.query not in target_path):
 				target_path.append(single_link_parsing.path)
 				target_links.append(i)
 		target_file=open('report/target.txt','w')
@@ -373,7 +390,8 @@ def print_target_links():
 
 #design function 
 def f():
-	print(colored(' '*170,'white','on_grey',['blink','dark']))
+	#print('       ',end='')
+	print(colored(' '*173,'white','on_grey',['blink','dark']))
 
 
 
@@ -381,6 +399,7 @@ def f():
 #main function 
 def main():
 	try:
+		global cookies,url,target_photos_dict,validcookie
 		f()
 		print(colored('[*] CHECKING FOR INTERNET CONNECTION','yellow'))
 		internet_check()
@@ -403,8 +422,10 @@ def main():
 		if(yes_or_no=='Y' or yes_or_no==''):
 			print(colored('[*] SPIDERING AND WEB CRAWLING THE TARGET WEBSITE','yellow'))
 			spider_links(url,cookies)
+			sys.setrecursionlimit(2000)
 			if(validcookie==True):
-				spider_links(url)
+				print('*******************')
+				spider_links(url,first=True)
 			f()
 			print_target_links()
 			f()
@@ -413,11 +434,13 @@ def main():
 			link_file_pointer=open('report/photos.txt','w')
 			for photos in target_photos_dict:
 				for photos_photos in target_photos_dict[photos]:
+					#print(photos_photos)
 					if (re.match(r'http(s?).*',photos_photos)):
-						link_file_pointer.write(photos_photos)
+						link_file_pointer.write(photos_photos+'\n')
 						continue #we have to include this in report 
 					else:
 						print(colored('[!] SOME IMAGES INSIDE WEBSITE   -->  '+photos_photos,'red'))
+			link_file_pointer.close()
 			f()
 		else:
 			f()
@@ -434,11 +457,12 @@ def main():
 			print(colored('[!] DO YOU WANT TO CHECK FOR SQL INJECTION TYPE [Y/n]','blue'),end='')
 			yes_or_no=input()
 			if(yes_or_no=='Y'or yes_or_no==''):
+				print(cookies)
 				for i in target_links:
 					u=urlparse(i)
 					if(len(u.path)==0):
 						continue
-					t=threading.Thread(target=sql.scan_sql_injection,args=(i,))
+					t=threading.Thread(target=sql.scan_sql_injection,args=(i,cookies))
 					t.start()
 			t.join()
 		except Exception as e:
@@ -446,10 +470,8 @@ def main():
 	except KeyboardInterrupt:
 		f()
 		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
-		f()
 	except Exception as e:
 		print(colored(e,'red'))
-
 
 
 #starting point of Code
@@ -461,7 +483,7 @@ if __name__=='__main__':
 		print('\n')
 		parser=create_argument_parser()
 		if(parser.url==None and parser.page==''):
-			print(colored("[-] Enter Url or Website Page of the target \n",'red'))
+			print(colored("[-] Enter Url or Website Page of the target \n",'red',attrs=['bold']))
 			helper()
 			sys.exit(0)
 		else:
@@ -491,7 +513,7 @@ if __name__=='__main__':
 		main()
 		end_time=time.time()
 		f()
-		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow'))
+		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow',attrs=['bold']))
 		f()
 	except KeyboardInterrupt:
 		f()
