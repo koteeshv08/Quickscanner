@@ -29,8 +29,8 @@ from attacks import sql
 from parsel import Selector
 from termcolor import colored
 from  urllib.parse import urlparse
-from attacks import vulnerable_default_pages
-
+from attacks import vulnerable_default_pages as vdp
+#import report_generate as rg
 
 #define variables
 url=''
@@ -214,15 +214,21 @@ def host_reachable():
 def information_gathering():
 	try:
 		global url
+		information_file_pointer=open('report/server_information.py','w')
 		response=requests.get(url,timeout=5)
 		if('server' in response.headers):
 			print(colored("[+]  SERVER      --> "+response.headers['server'],'green'))
+			information_file_pointer.write('Server=\"'+response.headers['server']+'\"\n')
 		if('X-Powered-By' in response.headers):
-			print(colored("[+]  X-Powered-By--> "+response.headers['X-Powered-By'],'green'))
+			print(colored("[+]  X_Powered_ByPowered_By--> "+response.headers['X-Powered-By'],'green'))
+			information_file_pointer.write('X_Powered_By=\"'+response.headers['X-Powered-By']+'\"\n')
 		if('Connection' in response.headers):
 			print(colored("[+]  CONNECTION   -> "+response.headers['Connection'],'green'))
+			information_file_pointer.write('Connection=\"'+response.headers['Connection']+'\"\n')
 		if('Content-Type' in response.headers):
 			print(colored("[+]  CONTENT-TYPE -> "+response.headers['Content-Type'],'green'))
+			information_file_pointer.write('Content_Type=\"'+response.headers['Content-Type']+'\"\n')
+		information_file_pointer.close()
 	except KeyboardInterrupt:
 		f()
 		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
@@ -285,7 +291,7 @@ def spider_links(myurl,mycookies={},first=False):
 		        		#illgeal to do crawl on .in websites
 		        		print(colored('[-].IN WEBSITE GOT SKIP          -->  '+link,'white',attrs=['dark']))
 		        		continue
-		        	if re.match(r'http(s?).*\.pdf',link):
+		        	if re.match(r'http(s?).*\.pdf',link) or re.match(r'http(s?).*\.pdf',link):
 		        		#If we got pdf link then no crawl
 		        		print(colored('[-].PDF FILE GOT SKIP            -->  '+link,'white',attrs=['dark']))
 		        		continue
@@ -419,19 +425,19 @@ def main():
 		f()
 		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE TYPE [Y/n]','blue'),end='')
 		yes_or_no=input()
-		if(yes_or_no=='Y' or yes_or_no==''):
+		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
 			print(colored('[*] SPIDERING AND WEB CRAWLING THE TARGET WEBSITE','yellow'))
 			spider_links(url,cookies)
 			sys.setrecursionlimit(2000)
 			if(validcookie==True):
-				print('*******************')
 				spider_links(url,first=True)
 			f()
 			print_target_links()
 			f()
 			print(colored('[!!] GOT SOME IMAGES INSIDE WEBSITE ','yellow'))
 			print(colored('[*] SOME IMAGES OUTSIDE WEBSITES -->  photos.txt(links stored in this file)','cyan',attrs=['bold']))
-			link_file_pointer=open('report/photos.txt','w')
+			link_file_pointer=open('report/internet_photos.txt','w')
+			link_file_pointer_local=open('report/local_photos.txt','w')
 			for photos in target_photos_dict:
 				for photos_photos in target_photos_dict[photos]:
 					#print(photos_photos)
@@ -439,16 +445,18 @@ def main():
 						link_file_pointer.write(photos_photos+'\n')
 						continue #we have to include this in report 
 					else:
+						link_file_pointer_local.write(photos_photos+'\n')
 						print(colored('[!] SOME IMAGES INSIDE WEBSITE   -->  '+photos_photos,'red'))
 			link_file_pointer.close()
+			link_file_pointer_local.close()
 			f()
 		else:
 			f()
 		print(colored('[!] DO YOU WANT TO CHECK FOR DEFAULT VULNEARBLE WEB PAGES TYPE [Y/n]','blue'),end='')
 		yes_or_no=input()
-		if(yes_or_no=='Y' or yes_or_no==''):
+		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
 			print(colored('[*] CHEKING TARGET WEBSITE FOR DEFAULT VULNEARBLE PAGES','yellow'))
-			vulnerable_default_pages.vulnerable_pages(url)
+			vdp.vulnerable_pages(url)
 			print('\r',flush=True,end='')
 			f()
 		else:
@@ -456,14 +464,18 @@ def main():
 		try:
 			print(colored('[!] DO YOU WANT TO CHECK FOR SQL INJECTION TYPE [Y/n]','blue'),end='')
 			yes_or_no=input()
-			if(yes_or_no=='Y'or yes_or_no==''):
-				print(cookies)
+			if(yes_or_no=='Y'or yes_or_no=='' or yes_or_no=='y'):
+				#print(cookies)
 				for i in target_links:
 					u=urlparse(i)
 					if(len(u.path)==0):
 						continue
 					t=threading.Thread(target=sql.scan_sql_injection,args=(i,cookies))
 					t.start()
+			time.sleep(0.5)
+			#print(sql.count)
+			#print(vdp.count)
+			#print(colored(sql.sql_list,'yellow'))
 			t.join()
 		except Exception as e:
 			print(colored(e,'red'))
@@ -512,6 +524,7 @@ if __name__=='__main__':
 			cookies=parser.cookies
 		main()
 		end_time=time.time()
+		time.sleep(0.5)
 		f()
 		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow',attrs=['bold']))
 		f()

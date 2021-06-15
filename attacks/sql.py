@@ -8,8 +8,9 @@ import time
 import threading
 from  urllib.parse import urlparse
 
-
-
+#"{'security_level':'0', 'PHPSESSID':'fdf5mou844jcfqfhgoaf7mpb47','acopendivids':'swingset,jotto,phpbb2,redmine'}" 
+count=0
+sql_list=[]
 def get_all_forms(url,cookies):
     """Given a `url`, it returns all forms from the HTML content"""
     try:
@@ -20,24 +21,45 @@ def get_all_forms(url,cookies):
     
 
 def get_form_details(form):
-    """
-    This function extracts all possible useful information about an HTML `form`
-    """
     details = {}
-    # get the form action (target url)
     try:
-        action = form.attrs.get("action").lower()
+        action = form.attrs.get("action")
     except:
         action = None
     # get the form method (POST, GET, etc.)
     method = form.attrs.get("method", "get").lower()
     # get all the input details such as type and name
+    #type=button , submit , textarea , option 
     inputs = []
     for input_tag in form.find_all("input"):
         input_type = input_tag.attrs.get("type", "text")
         input_name = input_tag.attrs.get("name")
         input_value = input_tag.attrs.get("value", "")
         inputs.append({"type": input_type, "name": input_name, "value": input_value})
+    for textarea_tag in form.find_all('textarea'):
+        input_name=textarea_tag.attrs.get('name')
+        input_value=textarea_tag.attrs.get('value')
+        if not (input_value):
+            input_value=''
+        input_type='text'
+        if  (input_name):
+            inputs.append({"type":input_type,"name": input_name,"value":input_value})
+    for button_tag in form.find_all('button'):
+        input_name=button_tag.attrs.get('name')
+        input_value=button_tag.attrs.get('value')
+        input_type=button_tag.attrs.get('type')
+        if(input_type.lower()=='submit' and input_name):
+            inputs.append({"name": input_name,"value":input_value})
+    for select in form.find_all('select'):
+        input_name=select.attrs.get('name')
+        for option in select.find_all('option'):
+            if(option.attrs.get('name')):
+                input_value=option.attrs.get('name')
+                break
+        if  (input_name):
+            inputs.append({"name": input_name,"value":input_value})
+
+
     # put everything to the resulting dictionary
     details["action"] = action
     details["method"] = method
@@ -46,8 +68,6 @@ def get_form_details(form):
 
 
 def is_vulnerable(response):
-    """A simple boolean function that determines whether a page 
-    is SQL Injection vulnerable from its `response`"""
     errors = {
         # MySQL
         "you have an error in your sql syntax;",
@@ -56,31 +76,42 @@ def is_vulnerable(response):
         "unclosed quotation mark after the character string",
         # Oracle
         "quoted string not properly terminated",
+        'Error: You have an error in your SQL syntax'
     }
+    #print(bs(response.content))
     for error in errors:
-        # if you find one of these errors, return True
-        #print(bs(response.text))
-        if error in response.content.decode().lower():
-        #if error in respone.text.lower():
+       # if error in response.content.decode().lower():
+        #    return True
+        if error in response.text.lower():
             return True
     # no error detected
     return False
 
 
 def scan_sql_injection(url,cookies):
-    # test on URL
+    global sql_list , count
+    #sql_file_pointer.write('sql_injections=[')
     for c in "\"'":
-        # add quote/double quote character to the URL
-        new_url = f"{url}{c}"
-        print(colored("[!] Trying for "+new_url,'green'))
-        # make the HTTP request
+        u=urlparse(url)
+        urlparsed_query=urlparse(url).query
+        urlparsed_query=urlparsed_query.replace('&',f"{c}&")
+        url_temp=u.scheme+'://'+u.netloc+u.path+u.params
+        if(u.query):
+            url_temp+='?'+u.query
+        url_temp+=u.fragment
+        new_url = f"{url_temp}{c}"
+        print(colored("[!] Trying for URL parameters "+new_url,'green'))
         res = s.get(new_url,cookies=cookies)
         if is_vulnerable(res):
-            # SQL Injection detected on the URL itself, 
-            # no need to preceed for extracting forms and submitting them
-            print(colored("[+] SQL Injection vulnerability detected, link:"+str(new_url),'red'))
+            print(colored("[+] SQL Injection vulnerability detected GET type , link:"+str(new_url),'red',attrs=['bold']))
+            count+=1
+            #sql_file_pointer.write("{ 'url':'"+new_url+"','method':'get'}")
+            sql_dict={'url':url,'method':'get','payload':new_url}
+            sql_list.append(sql_dict)
+            #print(sql_list)
+
+
             return
-    # test on HTML forms
     forms = get_all_forms(url,cookies)
     #print(colored(f"[+] Detected {len(forms)} forms on {url}.",'yellow'))
     for form in forms:
@@ -89,6 +120,7 @@ def scan_sql_injection(url,cookies):
         for c in "\"'":
             # the data body we want to submit
             data = {}
+            #print(colored(form_details['inputs'],'blue'))
             for input_tag in form_details["inputs"]:
                 if input_tag["value"] or input_tag["type"] == "hidden":
                     # any input form that has some value or hidden,
@@ -98,20 +130,25 @@ def scan_sql_injection(url,cookies):
                     except:
                         pass
                 elif input_tag["type"] != "submit":
-                    # all others except submit, use some junk data with special character
                     data[input_tag["name"]] = f"test{c}"
-            # join the url with the action (form request URL)
-            url = urljoin(url, form_details["action"])
-            #print(url)
             #print(data)
+            url = urljoin(url, form_details["action"])
+            #print(colored(url,'white'))
             if form_details["method"] == "post":
                 res = s.post(url, data=data,cookies=cookies)
+                if is_vulnerable(res): 
+                    print(colored("[+] SQL Injection vulnerability detected, link  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] DATA : POST TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+                    sql_dict={'url':url,'method':'post','payload':data}
+                    sql_list.append(sql_dict)
+                    count+=1
+                    #print(sql_list)
             elif form_details["method"] == "get":
                 res = s.get(url, params=data,cookies=cookies)
-            # test whether the resulting page is vulnerable
-            if is_vulnerable(res):
-                print(colored("[+] SQL Injection vulnerability detected, link:"+str(url),'red',attrs=['bold']))
-                #print("[+] Form:")
-                #pprint(form_details)
-                break   
+                if is_vulnerable(res):
+                    sql_dict={'''url''':url,'method':'get','payload':data}
+                    sql_list.append(sql_dict)
+                    count+=1
+                    #print(sql_list)
+                    print(colored("[+] SQL Injection vulnerability detected, link  -->  "+str(res.url),'red',attrs=['bold']),colored('\n[*] DATA : GET TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+    
 

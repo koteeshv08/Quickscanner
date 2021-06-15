@@ -3,6 +3,8 @@ from termcolor import colored
 from  urllib.parse import urlparse
 import requests
 
+count=0
+
 
 #design function 
 def f():
@@ -13,9 +15,11 @@ def f():
 #/usr/share/wordlists/dirb/vulns
 def vulnerable_pages(url):
 	try:
+		global count
 		urlparsed=urlparse(url)
 		url=urlparsed.scheme+'://'+urlparsed.netloc
 		file_pointer=open('payloads/vulnerable_default_pages.txt')
+		file_pointer_default=open('report/default_vulnerable_pages.txt','w')
 		reading_file=file_pointer.readlines()
 		for line in reading_file:
 			line=line.strip('\n')
@@ -25,6 +29,8 @@ def vulnerable_pages(url):
 				res=requests.get(url+'/'+line)
 				if(res.status_code==200):
 					print(colored('\r[+] FOUND VULNEARBLE PAGE (DEFAULT PAGE) --> '+url+'/'+line,'red',attrs=['bold']))
+					count+=1
+					file_pointer_default.write(url+'/'+line+'\n')
 			except Exception as e:
 				print(colored("\r[!] PAGE NOT FOUND -->"+url+'/'+line,'red'),flush=True,end='')
 	except KeyboardInterrupt:
