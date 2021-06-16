@@ -54,7 +54,6 @@ index.jws
 resources
 access_log
 cgi-script
-index.html
 phpmyadmin
 services/*
 jmxproxy/*

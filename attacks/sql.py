@@ -100,14 +100,15 @@ def scan_sql_injection(url,cookies):
             url_temp+='?'+u.query
         url_temp+=u.fragment
         new_url = f"{url_temp}{c}"
-        print(colored("[!] Trying for URL parameters "+new_url,'green'))
+        print(colored("\r[!] Trying for URL parameters "+new_url,'green'),flush=True,end='')
         res = s.get(new_url,cookies=cookies)
         if is_vulnerable(res):
-            print(colored("[+] SQL Injection vulnerability detected GET type , link:"+str(new_url),'red',attrs=['bold']))
+            print(colored("\r[+] SQL Injection vulnerability detected GET type , link:"+str(new_url),'red',attrs=['bold']))
             count+=1
             #sql_file_pointer.write("{ 'url':'"+new_url+"','method':'get'}")
             sql_dict={'url':url,'method':'get','payload':new_url}
             sql_list.append(sql_dict)
+            print(sql_list)
             #print(sql_list)
 
 
@@ -137,18 +138,20 @@ def scan_sql_injection(url,cookies):
             if form_details["method"] == "post":
                 res = s.post(url, data=data,cookies=cookies)
                 if is_vulnerable(res): 
-                    print(colored("[+] SQL Injection vulnerability detected, link  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] DATA : POST TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+                    print(colored("\r[+] SQL Injection vulnerability detected, link  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] DATA : POST TYPE  --> '+str(data),'white',attrs=['dark','bold']))
                     sql_dict={'url':url,'method':'post','payload':data}
                     sql_list.append(sql_dict)
+                    print(sql_list)
                     count+=1
                     #print(sql_list)
             elif form_details["method"] == "get":
                 res = s.get(url, params=data,cookies=cookies)
                 if is_vulnerable(res):
-                    sql_dict={'''url''':url,'method':'get','payload':data}
+                    sql_dict={'url':url,'method':'get','payload':data}
                     sql_list.append(sql_dict)
+                    print(sql_list)
                     count+=1
                     #print(sql_list)
-                    print(colored("[+] SQL Injection vulnerability detected, link  -->  "+str(res.url),'red',attrs=['bold']),colored('\n[*] DATA : GET TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+                    print(colored("\res[+] SQL Injection vulnerability detected, link  -->  "+str(res.url),'red',attrs=['bold']),colored('\n[*] DATA : GET TYPE  --> '+str(data),'white',attrs=['dark','bold']))
     
 

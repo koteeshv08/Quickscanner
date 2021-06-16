@@ -30,6 +30,7 @@ from parsel import Selector
 from termcolor import colored
 from  urllib.parse import urlparse
 from attacks import vulnerable_default_pages as vdp
+from attacks import open_redirection as op 
 #import report_generate as rg
 
 #define variables
@@ -276,7 +277,7 @@ def spider_links(myurl,mycookies={},first=False):
 		        		continue
 		        	#link=link.strip('/')
 		        	#print(link)
-		        	if 'javascript:' in link:
+		        	if 'javascript:' in link or 'mailto' in link:
 		        		continue
 		        	if re.match(r'#.*',link):
 		        		#no need to check for fragments so skip
@@ -423,14 +424,21 @@ def main():
 		print(colored('[*] GATHERING INFORMATION ABOUT THE TARGET','yellow'))
 		information_gathering()
 		f()
-		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE TYPE [Y/n]','blue'),end='')
+		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM GIVEN URL TYPE [Y/n]','blue'),end='')
 		yes_or_no=input()
-		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM URL INDEX PAGE TYPE [Y/n]','blue'),end='')
+		yes_or_no_index_crawl=input()
+		if(yes_or_no_index_crawl=='Y' or yes_or_no_index_crawl=='y' or yes_or_no_index_crawl==''):
 			print(colored('[*] SPIDERING AND WEB CRAWLING THE TARGET WEBSITE','yellow'))
 			spider_links(url,cookies)
+			if(validcookie==True):
+				spider_links(input_url,first=True)
+		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+			print(colored('[*] SPIDERING AND WEB CRAWLING THE TARGET WEBSITE','yellow'))
+			spider_links(input_url,cookies)
 			sys.setrecursionlimit(2000)
 			if(validcookie==True):
-				spider_links(url,first=True)
+				spider_links(input_url,first=True)
 			f()
 			print_target_links()
 			f()
@@ -465,6 +473,7 @@ def main():
 			print(colored('[!] DO YOU WANT TO CHECK FOR SQL INJECTION TYPE [Y/n]','blue'),end='')
 			yes_or_no=input()
 			if(yes_or_no=='Y'or yes_or_no=='' or yes_or_no=='y'):
+				print(colored('[*] CHECKING TARGET WEBSITES FROM SQL INJECTION ','yellow'))
 				#print(cookies)
 				for i in target_links:
 					u=urlparse(i)
@@ -472,11 +481,21 @@ def main():
 						continue
 					t=threading.Thread(target=sql.scan_sql_injection,args=(i,cookies))
 					t.start()
-			time.sleep(0.5)
-			#print(sql.count)
-			#print(vdp.count)
-			#print(colored(sql.sql_list,'yellow'))
-			t.join()
+			try:
+				time.sleep(0.5)
+				t.join()
+			except:
+				pass
+			print('\r',flush=True,end='')
+			f()
+			print(colored('[!] DO YOU WANT TO CHECK FOR OPEN REDIRECTION [Y/n]','blue'),end='')
+			yes_or_no=input()
+			if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+				print(colored('[*] CHECKING TARGET WEBSITES FROM OPEN REDIRECTION ','yellow'))
+				for i in target_links:
+					if(urlparse(i).query):
+						op.scan(i,cookies)
+			print('\r',flush=True,end='')
 		except Exception as e:
 			print(colored(e,'red'))
 	except KeyboardInterrupt:
@@ -528,6 +547,7 @@ if __name__=='__main__':
 		f()
 		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow',attrs=['bold']))
 		f()
+		print(sql.count)
 	except KeyboardInterrupt:
 		f()
 		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
