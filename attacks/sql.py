@@ -8,7 +8,7 @@ import time
 import threading
 from  urllib.parse import urlparse
 
-#"{'security_level':'0', 'PHPSESSID':'fdf5mou844jcfqfhgoaf7mpb47','acopendivids':'swingset,jotto,phpbb2,redmine'}" 
+
 count=0
 sql_list=[]
 def get_all_forms(url,cookies):
@@ -80,9 +80,9 @@ def is_vulnerable(response):
     }
     #print(bs(response.content))
     for error in errors:
-       # if error in response.content.decode().lower():
-        #    return True
         if error in response.text.lower():
+            return True
+        if error in response.content.decode().lower():
             return True
     # no error detected
     return False
@@ -100,15 +100,14 @@ def scan_sql_injection(url,cookies):
             url_temp+='?'+u.query
         url_temp+=u.fragment
         new_url = f"{url_temp}{c}"
-        print(colored("\r[!] Trying for URL parameters "+new_url,'green'),flush=True,end='')
+        print(colored("\r[!] TRYING FOR URL PARAMETERS "+new_url,'green'),flush=True,end='')
         res = s.get(new_url,cookies=cookies)
         if is_vulnerable(res):
-            print(colored("\r[+] SQL Injection vulnerability detected GET type , link:"+str(new_url),'red',attrs=['bold']))
+            print(colored("\r[+] SQL INJECTION VULNERABILITY DETECTED GET  TYPE LINK  -->  "+str(new_url),'red',attrs=['bold']))
             count+=1
             #sql_file_pointer.write("{ 'url':'"+new_url+"','method':'get'}")
             sql_dict={'url':url,'method':'get','payload':new_url}
             sql_list.append(sql_dict)
-            print(sql_list)
             #print(sql_list)
 
 
@@ -138,10 +137,9 @@ def scan_sql_injection(url,cookies):
             if form_details["method"] == "post":
                 res = s.post(url, data=data,cookies=cookies)
                 if is_vulnerable(res): 
-                    print(colored("\r[+] SQL Injection vulnerability detected, link  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] DATA : POST TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+                    print(colored("\r[+] SQL INJECTION VULNERABILITY DETECTED POST TYPE LINK  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] DATA : POST TYPE  --> '+str(data),'white',attrs=['dark','bold']))
                     sql_dict={'url':url,'method':'post','payload':data}
                     sql_list.append(sql_dict)
-                    print(sql_list)
                     count+=1
                     #print(sql_list)
             elif form_details["method"] == "get":
@@ -149,9 +147,8 @@ def scan_sql_injection(url,cookies):
                 if is_vulnerable(res):
                     sql_dict={'url':url,'method':'get','payload':data}
                     sql_list.append(sql_dict)
-                    print(sql_list)
                     count+=1
                     #print(sql_list)
-                    print(colored("\res[+] SQL Injection vulnerability detected, link  -->  "+str(res.url),'red',attrs=['bold']),colored('\n[*] DATA : GET TYPE  --> '+str(data),'white',attrs=['dark','bold']))
+                    print(colored("\r[+] SQL INJECTION VULNERABILITY DETECTED GET TYPE LINK  -->  "+str(res.url),'red',attrs=['bold']),colored('\n[*] DATA : GET TYPE  --> '+str(data),'white',attrs=['dark','bold']))
     
 

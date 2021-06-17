@@ -9,7 +9,7 @@ count=0
 #design function 
 def f():
 	#print('       ',end='')
-	print(colored(' '*173,'white','on_grey',['blink','dark']))
+	print(colored('-'*170,'white','on_grey',['dark']))
 
 	
 #/usr/share/wordlists/dirb/vulns
@@ -35,7 +35,6 @@ def vulnerable_pages(url):
 				print(colored("\r[!] PAGE NOT FOUND -->"+url+'/'+line,'red'),flush=True,end='')
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
-		f()
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING DEFAULT VULNEARBLE PAGE CHECKING ','red',attrs=['bold']))
 	except Exception as e:
 		print((colored('[-]'+str(e),'red')))

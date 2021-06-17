@@ -31,6 +31,7 @@ from termcolor import colored
 from  urllib.parse import urlparse
 from attacks import vulnerable_default_pages as vdp
 from attacks import open_redirection as op 
+from attacks import xss
 #import report_generate as rg
 
 #define variables
@@ -77,6 +78,7 @@ def helper():
 		print(colored("-----------",'yellow'))
 		print(colored('''          This is a python based tool to scan for Vulnerabilities in any Web Application 
 	  mainly it is focused  to determine the Top10 OWASP Vulnerabilities in web app...\n''','green'))
+		f()
 
 
 
@@ -115,14 +117,14 @@ def internet_check():
 		os.system('rm internet.txt')
 		if not "0% packet loss" in content:
 			print(colored('[-] NO INTERNET CONNECT TO NETWORK AND TRY AGAIN','red'))
-			print(colored('[+] IF YOU CONNECTED TO NETWORK PLEASE TRY AGAIN','yellow'))
+			print(colored('[+] IF YOU ARE CONNECTED TO NETWORK AND HAVING STABLE CONNECTION PLEASE TRY AGAIN','yellow'))
 			f()
 			sys.exit(0)
 		else:
 			print(colored('[+] HAVING STABLE INTERNET CONNECTION','green'))
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
@@ -144,7 +146,7 @@ def url_check():
 			print(colored('[+] URL IS VALID','green'))
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
@@ -179,7 +181,7 @@ def cookie_check():
 				print(colored("[-] INVALID COOKIE",'red'))
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
@@ -203,7 +205,7 @@ def host_reachable():
 			sys.exit(0)
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
@@ -232,7 +234,7 @@ def information_gathering():
 		information_file_pointer.close()
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
@@ -386,19 +388,19 @@ def print_target_links():
 		target_file.close()
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 		f()
 		sys.exit(0)
 	except Exception as e:
 		print((colored('[-]'+str(e),'red')))
 
 
-
+screen=170
 
 #design function 
-def f():
+def f(s=screen):
 	#print('       ',end='')
-	print(colored(' '*173,'white','on_grey',['blink','dark']))
+	print(colored(' '*s,'white','on_grey',attrs=['dark']))
 
 
 
@@ -424,11 +426,11 @@ def main():
 		print(colored('[*] GATHERING INFORMATION ABOUT THE TARGET','yellow'))
 		information_gathering()
 		f()
-		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM GIVEN URL TYPE [Y/n]','blue'),end='')
+		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM GIVEN URL TYPE [Y/n]','blue'),end='\n')
 		yes_or_no=input()
-		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM URL INDEX PAGE TYPE [Y/n]','blue'),end='')
+		print(colored('[!] DO YOU WANT TO CRAWL THE WEBSITE FROM '+url+' INDEX PAGE TYPE [y/N]','blue'),end='\n')
 		yes_or_no_index_crawl=input()
-		if(yes_or_no_index_crawl=='Y' or yes_or_no_index_crawl=='y' or yes_or_no_index_crawl==''):
+		if(yes_or_no_index_crawl=='Y' or yes_or_no_index_crawl=='y'):
 			print(colored('[*] SPIDERING AND WEB CRAWLING THE TARGET WEBSITE','yellow'))
 			spider_links(url,cookies)
 			if(validcookie==True):
@@ -460,47 +462,74 @@ def main():
 			f()
 		else:
 			f()
-		print(colored('[!] DO YOU WANT TO CHECK FOR DEFAULT VULNEARBLE WEB PAGES TYPE [Y/n]','blue'),end='')
-		yes_or_no=input()
-		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
-			print(colored('[*] CHEKING TARGET WEBSITE FOR DEFAULT VULNEARBLE PAGES','yellow'))
-			vdp.vulnerable_pages(url)
-			print('\r',flush=True,end='')
-			f()
-		else:
-			f()
 		try:
-			print(colored('[!] DO YOU WANT TO CHECK FOR SQL INJECTION TYPE [Y/n]','blue'),end='')
-			yes_or_no=input()
-			if(yes_or_no=='Y'or yes_or_no=='' or yes_or_no=='y'):
-				print(colored('[*] CHECKING TARGET WEBSITES FROM SQL INJECTION ','yellow'))
-				#print(cookies)
-				for i in target_links:
-					u=urlparse(i)
-					if(len(u.path)==0):
-						continue
-					t=threading.Thread(target=sql.scan_sql_injection,args=(i,cookies))
-					t.start()
 			try:
-				time.sleep(0.5)
-				t.join()
+				print(colored('[!] DO YOU WANT TO CHECK FOR SQL INJECTION TYPE [Y/n]','blue'),end='\n')
+				yes_or_no=input()
+				if(yes_or_no=='Y'or yes_or_no=='' or yes_or_no=='y'):
+					print(colored('[*] CHECKING TARGET WEBSITES FOR SQL INJECTION ','yellow'))
+				#print(cookies)
+					try:
+						for i in target_links:
+							u=urlparse(i)
+							if(len(u.path)==0):
+								continue
+							t=threading.Thread(target=sql.scan_sql_injection,args=(i,cookies))
+							t.start()
+					except:
+						pass
+			except KeyboardInterrupt:
+				f(screen-2)
+				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING SQL INJECTION CHECKING','red',attrs=['bold']))
+			try:
+				time.sleep(2)
+				#t.join()
 			except:
 				pass
-			print('\r',flush=True,end='')
+			#print('\r',flush=True,end='')
 			f()
-			print(colored('[!] DO YOU WANT TO CHECK FOR OPEN REDIRECTION [Y/n]','blue'),end='')
-			yes_or_no=input()
-			if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
-				print(colored('[*] CHECKING TARGET WEBSITES FROM OPEN REDIRECTION ','yellow'))
-				for i in target_links:
-					if(urlparse(i).query):
-						op.scan(i,cookies)
-			print('\r',flush=True,end='')
+			try:
+				print(colored('[!] DO YOU WANT TO CHECK FOR CROSS SITE SCRIPTING VULNEARBILITY  [Y/n]','blue'),end='\n')
+				yes_or_no=input()
+				if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+					print(colored('[*] CHECKING TARGET WEBSITES FOR CROSS SITE SCRIPTING ','yellow'))
+					for i in target_links:
+						xss.scan_xss(i,cookies)
+			except KeyboardInterrupt:
+				f(screen-2)
+				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING XSS CHECKING','red',attrs=['bold']))
+			f()
+			try:
+				print(colored('[!] DO YOU WANT TO CHECK FOR DEFAULT VULNEARBLE WEB PAGES TYPE [Y/n]','blue'),end='\n')
+				yes_or_no=input()
+				if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+					print(colored('[*] CHEKING TARGET WEBSITE FOR DEFAULT VULNEARBLE PAGES','yellow'))
+					vdp.vulnerable_pages(url)
+					print('\r',flush=True,end='')
+					f()
+				else:
+					f()
+			except KeyboardInterrupt:
+				f(screen-2)
+				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING VULNEARBLE PAGES CHECKING ','red',attrs=['bold']))
+				f()
+			try:
+				print(colored('[!] DO YOU WANT TO CHECK FOR OPEN REDIRECTION [Y/n]','blue'),end='\n')
+				yes_or_no=input()
+				if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+					print(colored('[*] CHECKING TARGET WEBSITES FOR OPEN REDIRECTION ','yellow'))
+					for i in target_links:
+						if(urlparse(i).query):
+							op.scan(i,cookies)
+				print('\r',flush=True,end='')
+			except KeyboardInterrupt:
+				f(screen-2)
+				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING OPEN REDIRECTION CHECKING ','red',attrs=['bold']))
 		except Exception as e:
 			print(colored(e,'red'))
 	except KeyboardInterrupt:
-		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		f(screen-2)
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red',attrs=['bold']))
 	except Exception as e:
 		print(colored(e,'red'))
 
@@ -508,6 +537,7 @@ def main():
 #starting point of Code
 if __name__=='__main__':
 	try:
+		f()
 		start_time=time.time()
 		os.system('mkdir report > error.logs 2>&1')
 		banner()
@@ -545,12 +575,11 @@ if __name__=='__main__':
 		end_time=time.time()
 		time.sleep(0.5)
 		f()
-		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow',attrs=['bold']))
+		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow','on_grey',attrs=['bold','reverse']))
 		f()
-		print(sql.count)
 	except KeyboardInterrupt:
 		f()
-		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED ','red'))
+		print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED QUITING ','red',attrs=['bold']))
 		f()
 	except Exception as e:
 		print(colored(e,'red'))
