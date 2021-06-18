@@ -2,8 +2,17 @@ import requests
 from termcolor import colored
 from urllib.parse import urlparse
 
+screen=170
+count=0
+open_redirection_list=[]
+#design function 
+def f(s=screen):
+    #print('       ',end='')
+    print(colored(' '*s,'white','on_grey',attrs=['dark']))
+
 
 def scan(url,cookies):
+    global count
     open_redirection_file_pointer=open('payloads/open_redirection.txt','r')
     for payload in open_redirection_file_pointer.readlines():
         payload = payload.strip('\n')
@@ -23,7 +32,13 @@ def scan(url,cookies):
                     for response in res.history:
                         if response.status_code == 301 or response.status_code == 302:
                               print(colored("\r[+] OPEN REDIRECTION VULNERABILITY EXISTS FOR THIS PAGE WITH PAYLOAD -->  "+target,'red',attrs=['bold']))
+                              count+=1
+                              open_redirection_list.append(target)
                               return
+            except KeyboardInterrupt:
+                f(screen-2)
+                print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING OPEN REDIRECTION CHECKING ','red',attrs=['bold']))
+                return 'quit'
             except:
                 pass
         except Exception as e:

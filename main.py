@@ -520,7 +520,9 @@ def main():
 					print(colored('[*] CHECKING TARGET WEBSITES FOR OPEN REDIRECTION ','yellow'))
 					for i in target_links:
 						if(urlparse(i).query):
-							op.scan(i,cookies)
+							break_yes_no=op.scan(i,cookies)
+							if(break_yes_no=='quit'):
+								break
 				print('\r',flush=True,end='')
 			except KeyboardInterrupt:
 				f(screen-2)
@@ -572,6 +574,10 @@ if __name__=='__main__':
 			output=parser.output
 			cookies=parser.cookies
 		main()
+		#print(sql.sql_list)
+		#print(xss.xss_list)
+		#print(op.open_redirection_list)
+		#print(vdp.vulnerable_pages_list)
 		end_time=time.time()
 		time.sleep(0.5)
 		f()

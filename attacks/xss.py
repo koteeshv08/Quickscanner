@@ -4,6 +4,8 @@ from bs4 import BeautifulSoup as bs
 from urllib.parse import urljoin
 from termcolor import colored
 
+
+xss_list=[] 
 def get_all_forms(url,cookies):
     soup=bs(requests.get(url,cookies=cookies).content, "html.parser")
     return soup.find_all("form")
@@ -77,7 +79,7 @@ def submit_form(form_details, url,payload,cookies):
 
 def scan_xss(url,cookies):
 
-    
+    global xss_list
     forms = get_all_forms(url,cookies)
     #print(f"[+] Detected {len(forms)} forms on {url}.")
     f=open("payloads/xss.txt",'r')
@@ -92,6 +94,8 @@ def scan_xss(url,cookies):
             if payload in content or payload in requests.get(url,cookies=cookies).content.decode():
                 #print(payload)
                 print(colored("\r[+] XSS CROSS SITE SCRIPTING VULNERABILITY DETECTED  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] FORM DATA :  '+str(data),'white',attrs=['dark','bold']))
+                xss_dict={'url':url,'method':form_details['method'],'payload':payload,'data':data}
+                xss_list.append(xss_dict)
                 #print(f"[+] XSS Detected on {url}")
                 #print(f"[*] Form details:")
                 #pprint(form_details)
