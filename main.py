@@ -32,6 +32,8 @@ from  urllib.parse import urlparse
 from attacks import vulnerable_default_pages as vdp
 from attacks import open_redirection as op 
 from attacks import xss
+from report_data.generate import *
+from report_data.data import server_information
 #import report_generate as rg
 
 #define variables
@@ -216,21 +218,27 @@ def host_reachable():
 #function to gather information about the Target website
 def information_gathering():
 	try:
-		global url
+		global url 
 		information_file_pointer=open('report/server_information.py','w')
 		response=requests.get(url,timeout=5)
 		if('server' in response.headers):
 			print(colored("[+]  SERVER      --> "+response.headers['server'],'green'))
 			information_file_pointer.write('Server=\"'+response.headers['server']+'\"\n')
+			server_information.Server=response.headers['Server']
 		if('X-Powered-By' in response.headers):
 			print(colored("[+]  X_Powered_ByPowered_By--> "+response.headers['X-Powered-By'],'green'))
 			information_file_pointer.write('X_Powered_By=\"'+response.headers['X-Powered-By']+'\"\n')
+			server_information.X_Powered_By=response.headers['X-Powered-By']
 		if('Connection' in response.headers):
 			print(colored("[+]  CONNECTION   -> "+response.headers['Connection'],'green'))
 			information_file_pointer.write('Connection=\"'+response.headers['Connection']+'\"\n')
+			server_information.Connection=response.headers['Connection']
 		if('Content-Type' in response.headers):
 			print(colored("[+]  CONTENT-TYPE -> "+response.headers['Content-Type'],'green'))
 			information_file_pointer.write('Content_Type=\"'+response.headers['Content-Type']+'\"\n')
+			server_information.Content_Type=response.headers['Content-Type']
+		information_file_pointer.write('Url=\"'+url+'\"')
+		server_information.Url=url
 		information_file_pointer.close()
 	except KeyboardInterrupt:
 		f()
@@ -500,12 +508,13 @@ def main():
 				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING XSS CHECKING','red',attrs=['bold']))
 			f()
 			try:
+				print(colored('[!] NEXT IS CHECKING FOR SERVER MISCONFIGURATIONS ','yellow'))
 				print(colored('[!] DO YOU WANT TO CHECK FOR DEFAULT VULNEARBLE WEB PAGES TYPE [Y/n]','blue'),end='\n')
 				yes_or_no=input()
 				if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
 					print(colored('[*] CHEKING TARGET WEBSITE FOR DEFAULT VULNEARBLE PAGES','yellow'))
 					vdp.vulnerable_pages(url)
-					print('\r',flush=True,end='')
+					#print('\r',flush=True,end='')
 					f()
 				else:
 					f()
@@ -523,7 +532,8 @@ def main():
 							break_yes_no=op.scan(i,cookies)
 							if(break_yes_no=='quit'):
 								break
-				print('\r',flush=True,end='')
+				#print('\r',flush=True,end='')
+				f()
 			except KeyboardInterrupt:
 				f(screen-2)
 				print(colored('[-] KEYBOARD INTERRUPT CTRL+ C PRESSED DURING OPEN REDIRECTION CHECKING ','red',attrs=['bold']))
@@ -541,7 +551,7 @@ if __name__=='__main__':
 	try:
 		f()
 		start_time=time.time()
-		os.system('mkdir report > error.logs 2>&1')
+		os.system('rm -r report > error.logs 2>&1; mkdir report > error.logs 2>&1')
 		banner()
 		print('\n')
 		parser=create_argument_parser()
@@ -574,11 +584,25 @@ if __name__=='__main__':
 			output=parser.output
 			cookies=parser.cookies
 		main()
-		#print(sql.sql_list)
-		#print(xss.xss_list)
-		#print(op.open_redirection_list)
-		#print(vdp.vulnerable_pages_list)
+		print(colored('\r[!] DO YOU WANT TO CREATE REPORT [Y/n]','blue'),end='\n')
+		yes_or_no=input()
+		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+			print(colored('[*] CREATING OUTPUT REPORT PLEASE WAIT ','yellow'))
+			create_target_links()
+			create_photos_links()
+			create_internet_photos_links()
+			create_main_report()
 		end_time=time.time()
+		print(colored('[+] GENERATED REPORT SUCCESSFULLY (Inside ./report/)','green',attrs=['bold']))
+		f()
+		print(colored('\r[!] DO YOU WANT TO OPEN REPORT [Y/n]','blue'),end='\n')
+		yes_or_no=input()
+		if(yes_or_no=='Y' or yes_or_no=='' or yes_or_no=='y'):
+			os.system('firefox report/Quick_Scanner_generated_report.html &')
+		#print('sql.sql_list=',sql.sql_list)
+		#print('xss.xss_list',xss.xss_list)
+		#print('op.open_redirection_list',op.open_redirection_list)
+		#print('vdp.vulnerable_pages_list',vdp.vulnerable_pages_list)
 		time.sleep(0.5)
 		f()
 		print(colored('[**] TIME TAKEN TO EXECUTE THE CODE '+str(end_time-start_time)+ " SECONDS",'yellow','on_grey',attrs=['bold','reverse']))

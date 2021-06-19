@@ -80,6 +80,7 @@ def submit_form(form_details, url,payload,cookies):
 def scan_xss(url,cookies):
 
     global xss_list
+    print(colored("[!] TRYING FOR CROSS SITE SCRIPTING INSIDE  -->  "+url,'white',attrs=['dark']),flush=False,end='\n')
     forms = get_all_forms(url,cookies)
     #print(f"[+] Detected {len(forms)} forms on {url}.")
     f=open("payloads/xss.txt",'r')
@@ -93,7 +94,7 @@ def scan_xss(url,cookies):
             content=res.content.decode()
             if payload in content or payload in requests.get(url,cookies=cookies).content.decode():
                 #print(payload)
-                print(colored("\r[+] XSS CROSS SITE SCRIPTING VULNERABILITY DETECTED  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] FORM DATA :  '+str(data),'white',attrs=['dark','bold']))
+                print(colored("[+] XSS CROSS SITE SCRIPTING VULNERABILITY DETECTED  -->  "+str(url),'red',attrs=['bold']),colored('\n[*] FORM DATA :  '+str(data),'white',attrs=['dark','bold']))
                 xss_dict={'url':url,'method':form_details['method'],'payload':payload,'data':data}
                 xss_list.append(xss_dict)
                 #print(f"[+] XSS Detected on {url}")

@@ -1,0 +1,4 @@
+sqli_links=['https://owasp.org/www-project-top-ten/2017/A1_2017-Injection','https://en.wikipedia.org/wiki/SQL_injection','https://portswigger.net/web-security/sql-injection']
+xss_links=['https://owasp.org/www-project-top-ten/2017/A7_2017-Cross-Site_Scripting_(XSS)','https://en.wikipedia.org/wiki/Cross-site_scripting','https://portswigger.net/web-security/cross-site-scripting']
+open_redirection_links=['https://cheatsheetseries.owasp.org/cheatsheets/Unvalidated_Redirects_and_Forwards_Cheat_Sheet.html','https://en.wikipedia.org/wiki/URL_redirection','https://portswigger.net/kb/issues/00500100_open-redirection-reflected']
+default_pages=['https://owasp.org/www-project-top-ten/2017/A6_2017-Security_Misconfiguration','https://www.whitehatsec.com/glossary/content/server-misconfiguration','https://outpost24.com/blog/What-are-security-misconfigurations-and-how-to-prevent-them']

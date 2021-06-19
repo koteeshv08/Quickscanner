@@ -13,6 +13,7 @@ def f(s=screen):
 
 def scan(url,cookies):
     global count
+    print(colored('\r[!] TRYING OPEN REDIRECTION VULNERABILITY LINK  -->  '+url,'white',attrs=['dark']),flush=False,end='\n')
     open_redirection_file_pointer=open('payloads/open_redirection.txt','r')
     for payload in open_redirection_file_pointer.readlines():
         payload = payload.strip('\n')
@@ -25,7 +26,7 @@ def scan(url,cookies):
                 target+=query_list[0]+'='+payload+'&'
             target=target.rstrip('&')
             target+=op_url_parsed.fragment
-            print(colored('\r[!] TRYING OPEN REDIRECTION VULNERABILITY FOR LINK '+target,'green'),flush=True,end='')
+            #print(colored('\r[!] TRYING OPEN REDIRECTION VULNERABILITY LINK  -->  '+target,'white',attrs=['dark']),flush=False,end='\n')
             try:
                 res=requests.get(target,cookies=cookies)
                 if(res.status_code!=404 and op_url_parsed.netloc not in res.url ):

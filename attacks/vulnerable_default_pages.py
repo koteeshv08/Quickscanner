@@ -24,7 +24,7 @@ def vulnerable_pages(url):
 		for line in reading_file:
 			line=line.strip('\n')
 			try:
-				print(colored('\r[!] TRYING FOR VULNEARBLE PAGE --> '+url+'/'+line,'green'),flush=True,end='')
+				print(colored('\r[!] TRYING FOR VULNEARBLE PAGE --> '+url+'/'+line,'white',attrs=['dark']),flush=False,end='\n')
 				#time.sleep(0.1)
 				res=requests.get(url+'/'+line)
 				if(res.status_code==200):
